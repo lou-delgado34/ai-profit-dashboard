@@ -1,29 +1,34 @@
 ﻿import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
 export default function AgentsPage() {
   return (
-    <main className="min-h-screen bg-black p-8 text-white">
-      <h1 className="text-5xl font-black">AI Superagents</h1>
+    <main className="min-h-screen bg-black text-white p-8">
+      <div className="mx-auto max-w-7xl">
 
-      <div className="mt-8 flex flex-wrap gap-4">
-        <Link href="/" className="rounded-xl bg-blue-600 px-5 py-3 font-bold">
-          App Builder
-        </Link>
+        <div className="flex flex-wrap gap-4 mb-10">
+          <Link href="/" className="rounded-xl bg-blue-600 px-6 py-3 font-bold">
+            Home
+          </Link>
 
-        <Link href="/projects" className="rounded-xl bg-purple-600 px-5 py-3 font-bold">
-          Projects
-        </Link>
+          <Link href="/projects" className="rounded-xl bg-purple-600 px-6 py-3 font-bold">
+            Projects
+          </Link>
 
-        <Link href="/actions" className="rounded-xl bg-green-600 px-5 py-3 font-bold">
-          Action Queue
-        </Link>
+          <Link href="/agents" className="rounded-xl bg-green-600 px-6 py-3 font-bold">
+            Agents
+          </Link>
+
+          <Link href="/actions" className="rounded-xl bg-pink-600 px-6 py-3 font-bold">
+            Actions
+          </Link>
+        </div>
+
+        <h1 className="text-6xl font-black">AI Superagents</h1>
+
+        <p className="mt-6 text-zinc-400 text-xl">
+          Agent management dashboard coming next.
+        </p>
       </div>
-
-      <p className="mt-8 text-zinc-400">
-        Agents route is now live.
-      </p>
     </main>
   );
 }
