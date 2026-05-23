@@ -91,12 +91,16 @@ export default async function ProjectDetailPage({
             </div>
 
             <span className="rounded-full border border-zinc-700 bg-black px-5 py-2 text-sm font-bold uppercase">
-              {buildJob ? buildJob.status : hasBuildPack && hasFiles ? "Ready To Build" : "In Progress"}
+              {buildJob
+                ? buildJob.status
+                : hasBuildPack && hasFiles
+                ? "Ready To Build"
+                : "In Progress"}
             </span>
           </div>
         </section>
 
-        <ProjectWorkspaceTabsV2 project={project} buildJob={buildJob} />
+        <ProjectWorkspaceTabsV2 project={project} buildJob={buildJob || null} />
       </div>
     </main>
   );
