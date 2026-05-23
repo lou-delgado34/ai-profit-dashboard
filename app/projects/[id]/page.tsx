@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import GenerateBuildPackButton from "./generate-build-pack-button";
+import GenerateProjectFilesButton from "./generate-project-files-button";
 import BuildPackViewer from "./build-pack-viewer";
+import GeneratedFilesViewer from "./generated-files-viewer";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +36,9 @@ export default async function ProjectDetailPage({
     );
   }
 
+  const buildPack = project.build_pack || {};
+  const generatedFiles = project.generated_files || {};
+
   return (
     <main className="min-h-screen bg-[#05070d] p-8 text-white">
       <div className="mx-auto max-w-7xl">
@@ -57,15 +62,45 @@ export default async function ProjectDetailPage({
             {project.prompt}
           </p>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
             <GenerateBuildPackButton
               projectId={project.id}
               prompt={project.prompt}
             />
+
+            <GenerateProjectFilesButton
+              projectId={project.id}
+              prompt={project.prompt}
+              buildPack={buildPack}
+            />
           </div>
         </section>
 
-        <BuildPackViewer buildPack={project.build_pack || {}} />
+        <section className="mb-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+            <p className="text-sm font-bold uppercase text-zinc-500">Build Pack</p>
+            <p className="mt-2 text-3xl font-black">
+              {Object.keys(buildPack).length > 0 ? "Ready" : "Missing"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+            <p className="text-sm font-bold uppercase text-zinc-500">Code Files</p>
+            <p className="mt-2 text-3xl font-black">
+              {Object.keys(generatedFiles).length > 0 ? "Ready" : "Missing"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+            <p className="text-sm font-bold uppercase text-zinc-500">Mode</p>
+            <p className="mt-2 text-3xl font-black">Option A</p>
+          </div>
+        </section>
+
+        <div className="space-y-8">
+          <GeneratedFilesViewer generatedFiles={generatedFiles} />
+          <BuildPackViewer buildPack={buildPack} />
+        </div>
       </div>
     </main>
   );
