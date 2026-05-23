@@ -7,6 +7,7 @@ import BuildPackViewer from "./build-pack-viewer";
 import GeneratedFilesViewer from "./generated-files-viewer";
 import ProjectExportPackage from "./project-export-package";
 import ProjectLaunchChecklist from "./project-launch-checklist";
+import ProductionReadinessPanel from "./production-readiness-panel";
 
 export default function ProjectWorkspaceTabsV2({
   project,
@@ -18,16 +19,13 @@ export default function ProjectWorkspaceTabsV2({
   const buildPack = project.build_pack || {};
   const generatedFiles = project.generated_files || {};
 
-  const hasBuildPack = Object.keys(buildPack).length > 0;
-  const hasFiles = Object.keys(generatedFiles).length > 0;
-
   const tabs = [
     "overview",
     "build pack",
     "files",
     "export",
     "launch",
-    "status",
+    "readiness",
   ];
 
   return (
@@ -80,80 +78,10 @@ export default function ProjectWorkspaceTabsV2({
       )}
 
       {tab === "build pack" && <BuildPackViewer buildPack={buildPack} />}
-
-      {tab === "files" && (
-        <GeneratedFilesViewer generatedFiles={generatedFiles} />
-      )}
-
+      {tab === "files" && <GeneratedFilesViewer generatedFiles={generatedFiles} />}
       {tab === "export" && <ProjectExportPackage project={project} />}
-
-      {tab === "launch" && (
-        <ProjectLaunchChecklist generatedFiles={generatedFiles} />
-      )}
-
-      {tab === "status" && (
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <p className="text-sm font-bold uppercase tracking-widest text-green-400">
-            Build Status
-          </p>
-
-          <h2 className="mt-2 text-3xl font-black">
-            Project Completion Tracker
-          </h2>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-              <p className="text-sm font-bold uppercase text-zinc-500">
-                Build Pack
-              </p>
-              <p className="mt-2 text-3xl font-black">
-                {hasBuildPack ? "Complete" : "Missing"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-              <p className="text-sm font-bold uppercase text-zinc-500">
-                Code Files
-              </p>
-              <p className="mt-2 text-3xl font-black">
-                {hasFiles ? "Complete" : "Missing"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-              <p className="text-sm font-bold uppercase text-zinc-500">
-                Export Package
-              </p>
-              <p className="mt-2 text-3xl font-black">
-                {hasFiles ? "Ready" : "Waiting"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-              <p className="text-sm font-bold uppercase text-zinc-500">
-                Launch Status
-              </p>
-              <p className="mt-2 text-3xl font-black">
-                {hasBuildPack && hasFiles ? "Ready" : "In Progress"}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-blue-800 bg-blue-950/30 p-5">
-            <h3 className="text-xl font-black text-blue-300">
-              Next Best Step
-            </h3>
-
-            <p className="mt-2 text-blue-100">
-              {!hasBuildPack
-                ? "Generate the Build Pack first."
-                : !hasFiles
-                ? "Generate Code Files next."
-                : "Download the ZIP package and follow the Launch Checklist."}
-            </p>
-          </div>
-        </section>
-      )}
+      {tab === "launch" && <ProjectLaunchChecklist generatedFiles={generatedFiles} />}
+      {tab === "readiness" && <ProductionReadinessPanel project={project} />}
     </div>
   );
 }
