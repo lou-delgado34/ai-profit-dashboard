@@ -1,87 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import GenerateBuildPackButton from "./generate-build-pack-button";
-import GenerateProjectFilesButton from "./generate-project-files-button";
-import BuildPackViewer from "./build-pack-viewer";
-import GeneratedFilesViewer from "./generated-files-viewer";
-import ProjectExportPackage from "./project-export-package";
-import ProjectLaunchChecklist from "./project-launch-checklist";
-import ProductionReadinessPanel from "./production-readiness-panel";
-
 export default function ProjectWorkspaceTabsV2({
   project,
+  buildJob,
 }: {
   project: any;
+  buildJob?: any;
 }) {
-  const [tab, setTab] = useState("overview");
-
-  const buildPack = project.build_pack || {};
-  const generatedFiles = project.generated_files || {};
-
-  const tabs = [
-    "overview",
-    "build pack",
-    "files",
-    "export",
-    "launch",
-    "readiness",
-  ];
-
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-4">
-        <div className="flex flex-wrap gap-3">
-          {tabs.map((item) => (
-            <button
-              key={item}
-              onClick={() => setTab(item)}
-              className={`rounded-xl px-5 py-3 font-bold capitalize ${
-                tab === item
-                  ? "bg-blue-600 text-white"
-                  : "bg-black text-zinc-400 hover:bg-zinc-900"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+      <p className="text-sm font-bold uppercase tracking-widest text-orange-400">
+        Real Build
+      </p>
 
-      {tab === "overview" && (
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-            Project Overview
-          </p>
+      <h2 className="mt-2 text-3xl font-black">
+        Phase 2 Build Tracker
+      </h2>
 
-          <h2 className="mt-2 text-4xl font-black">
-            {project.title || "Untitled Project"}
-          </h2>
+      <p className="mt-4 text-zinc-400">
+        Project: {project?.title || "Untitled Project"}
+      </p>
 
-          <p className="mt-4 whitespace-pre-wrap text-zinc-400">
-            {project.prompt}
-          </p>
+      <p className="mt-2 text-zinc-400">
+        Status: {buildJob?.status || "Not Started"}
+      </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <GenerateBuildPackButton
-              projectId={project.id}
-              prompt={project.prompt}
-            />
+      <p className="mt-2 text-zinc-400">
+        Step: {buildJob?.step || "Waiting"}
+      </p>
 
-            <GenerateProjectFilesButton
-              projectId={project.id}
-              prompt={project.prompt}
-              buildPack={buildPack}
-            />
+      <div className="mt-6 space-y-3">
+        {(buildJob?.logs || []).map((log: any, index: number) => (
+          <div key={index} className="rounded-xl bg-black p-4">
+            <p className="text-sm text-zinc-500">{log.time}</p>
+            <p className="font-bold">{log.message}</p>
           </div>
-        </section>
-      )}
-
-      {tab === "build pack" && <BuildPackViewer buildPack={buildPack} />}
-      {tab === "files" && <GeneratedFilesViewer generatedFiles={generatedFiles} />}
-      {tab === "export" && <ProjectExportPackage project={project} />}
-      {tab === "launch" && <ProjectLaunchChecklist generatedFiles={generatedFiles} />}
-      {tab === "readiness" && <ProductionReadinessPanel project={project} />}
+        ))}
+      </div>
     </div>
   );
 }

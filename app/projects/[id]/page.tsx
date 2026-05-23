@@ -22,6 +22,14 @@ export default async function ProjectDetailPage({
     .eq("id", id)
     .single();
 
+  const { data: buildJob } = await supabase
+    .from("app_build_jobs")
+    .select("*")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   if (!project) {
     return (
       <main className="min-h-screen bg-black p-8 text-white">
@@ -47,31 +55,19 @@ export default async function ProjectDetailPage({
     <main className="min-h-screen bg-[#05070d] p-8 text-white">
       <div className="mx-auto max-w-7xl">
         <nav className="mb-10 flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="rounded-xl bg-zinc-800 px-5 py-3 font-bold hover:bg-zinc-700"
-          >
+          <Link href="/" className="rounded-xl bg-zinc-800 px-5 py-3 font-bold hover:bg-zinc-700">
             Home
           </Link>
 
-          <Link
-            href="/projects"
-            className="rounded-xl bg-purple-600 px-5 py-3 font-bold"
-          >
+          <Link href="/projects" className="rounded-xl bg-purple-600 px-5 py-3 font-bold">
             Projects
           </Link>
 
-          <Link
-            href="/agents"
-            className="rounded-xl bg-zinc-800 px-5 py-3 font-bold hover:bg-zinc-700"
-          >
+          <Link href="/agents" className="rounded-xl bg-zinc-800 px-5 py-3 font-bold hover:bg-zinc-700">
             Agents
           </Link>
 
-          <Link
-            href="/actions"
-            className="rounded-xl bg-zinc-800 px-5 py-3 font-bold hover:bg-zinc-700"
-          >
+          <Link href="/actions" className="rounded-xl bg-zinc-800 px-5 py-3 font-bold hover:bg-zinc-700">
             Actions
           </Link>
         </nav>
@@ -80,7 +76,7 @@ export default async function ProjectDetailPage({
           <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-                Base44-Style Project Workspace
+                Phase 2 Project Workspace
               </p>
 
               <h1 className="mt-2 text-4xl font-black">
@@ -89,17 +85,18 @@ export default async function ProjectDetailPage({
 
               <p className="mt-3 text-zinc-500">
                 Build Pack: {hasBuildPack ? "Ready" : "Missing"} • Code Files:{" "}
-                {hasFiles ? "Ready" : "Missing"}
+                {hasFiles ? "Ready" : "Missing"} • Real Build:{" "}
+                {buildJob ? buildJob.status : "Not Started"}
               </p>
             </div>
 
             <span className="rounded-full border border-zinc-700 bg-black px-5 py-2 text-sm font-bold uppercase">
-              {hasBuildPack && hasFiles ? "Launch Ready" : "In Progress"}
+              {buildJob ? buildJob.status : hasBuildPack && hasFiles ? "Ready To Build" : "In Progress"}
             </span>
           </div>
         </section>
 
-        <ProjectWorkspaceTabsV2 project={project} />
+        <ProjectWorkspaceTabsV2 project={project} buildJob={buildJob} />
       </div>
     </main>
   );
