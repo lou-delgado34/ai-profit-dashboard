@@ -1,61 +1,61 @@
 ﻿import Link from "next/link";
+import { createClient } from "@supabase/supabase-js";
 
-export default function HomePage() {
+import CreateAgentForm from "./create-agent-form";
+import AgentTriggerPanel from "./agent-trigger-panel";
+import AgentDecisionPanel from "./agent-decision-panel";
+import AgentChainPanel from "./agent-chain-panel";
+
+export const dynamic = "force-dynamic";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export default async function AgentsPage() {
+  const { data: agents } = await supabase.from("agents").select("*").order("created_at", { ascending: false });
+  const { data: chains } = await supabase.from("agent_chains").select("*").order("created_at", { ascending: false });
+  const { data: triggers } = await supabase.from("agent_triggers").select("*").order("created_at", { ascending: false });
+  const { data: decisions } = await supabase.from("agent_decisions").select("*").order("created_at", { ascending: false });
+
   return (
-    <main className="min-h-screen bg-black p-8 text-white">
+    <main className="min-h-screen bg-[#05070d] p-8 text-white">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-10 flex flex-wrap gap-4">
-          <Link href="/" className="rounded-xl bg-blue-600 px-6 py-3 font-bold">Home</Link>
-          <Link href="/projects" className="rounded-xl bg-purple-600 px-6 py-3 font-bold">Projects</Link>
-          <Link href="/agents" className="rounded-xl bg-green-600 px-6 py-3 font-bold">Agents</Link>
-          <Link href="/actions" className="rounded-xl bg-pink-600 px-6 py-3 font-bold">Actions</Link>
-        </div>
-
-        <section className="rounded-[2rem] border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 p-10 shadow-2xl">
-          <p className="font-bold uppercase tracking-[0.35em] text-blue-400">
-            AI SOFTWARE FACTORY
-          </p>
-
-          <h1 className="mt-5 max-w-4xl text-6xl font-black leading-tight">
-            Build, Manage, and Launch Your AI Business System
-          </h1>
-
-          <p className="mt-6 max-w-3xl text-xl text-zinc-400">
-            Create projects, run AI Superagents, review action tasks, and move your system closer to launch.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/projects" className="rounded-2xl bg-purple-600 px-7 py-4 font-black">
-              View Projects
-            </Link>
-            <Link href="/agents" className="rounded-2xl bg-green-600 px-7 py-4 font-black">
-              Open Agents
-            </Link>
-            <Link href="/actions" className="rounded-2xl bg-pink-600 px-7 py-4 font-black">
-              Action Queue
-            </Link>
+        <nav className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/[0.04] px-6 py-4 backdrop-blur-xl">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.35em] text-blue-400">
+              AI Software Factory
+            </p>
+            <p className="text-sm text-zinc-500">Superagent Workspace</p>
           </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href="/" className="rounded-xl bg-white/10 px-5 py-2.5 font-bold hover:bg-white/20">Home</Link>
+            <Link href="/projects" className="rounded-xl bg-white/10 px-5 py-2.5 font-bold hover:bg-white/20">Projects</Link>
+            <Link href="/agents" className="rounded-xl bg-green-600 px-5 py-2.5 font-bold">Agents</Link>
+            <Link href="/actions" className="rounded-xl bg-white/10 px-5 py-2.5 font-bold hover:bg-white/20">Actions</Link>
+          </div>
+        </nav>
+
+        <section className="mb-10 rounded-[2rem] border border-white/10 bg-white/[0.035] p-8">
+          <p className="text-sm font-black uppercase tracking-[0.35em] text-green-400">
+            AI Superagents
+          </p>
+          <h1 className="mt-4 text-4xl font-black md:text-5xl">
+            Build Your Agent Team
+          </h1>
+          <p className="mt-4 max-w-3xl text-lg text-zinc-400">
+            Create agents, connect chains, set triggers, and review decisions from one clean workspace.
+          </p>
         </section>
 
-        <section className="mt-10 grid gap-6 md:grid-cols-3">
-          <Link href="/projects" className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 hover:border-purple-500">
-            <p className="text-sm font-bold uppercase tracking-widest text-purple-400">Step 1</p>
-            <h2 className="mt-3 text-3xl font-black">Projects</h2>
-            <p className="mt-3 text-zinc-400">Save and continue building your app ideas.</p>
-          </Link>
-
-          <Link href="/agents" className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 hover:border-green-500">
-            <p className="text-sm font-bold uppercase tracking-widest text-green-400">Step 2</p>
-            <h2 className="mt-3 text-3xl font-black">Agents</h2>
-            <p className="mt-3 text-zinc-400">Create AI helpers, chains, triggers, and decisions.</p>
-          </Link>
-
-          <Link href="/actions" className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8 hover:border-pink-500">
-            <p className="text-sm font-bold uppercase tracking-widest text-pink-400">Step 3</p>
-            <h2 className="mt-3 text-3xl font-black">Actions</h2>
-            <p className="mt-3 text-zinc-400">Review messages, drafts, WhatsApp tasks, and follow-ups.</p>
-          </Link>
-        </section>
+        <div className="space-y-10">
+          <CreateAgentForm />
+          <AgentTriggerPanel chains={chains || []} triggers={triggers || []} />
+          <AgentDecisionPanel decisions={decisions || []} />
+          <AgentChainPanel agents={agents || []} chains={chains || []} />
+        </div>
       </div>
     </main>
   );
