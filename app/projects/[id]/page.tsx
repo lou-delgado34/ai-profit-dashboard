@@ -4,6 +4,8 @@ import GenerateBuildPackButton from "./generate-build-pack-button";
 import GenerateProjectFilesButton from "./generate-project-files-button";
 import BuildPackViewer from "./build-pack-viewer";
 import GeneratedFilesViewer from "./generated-files-viewer";
+import ProjectExportPackage from "./project-export-package";
+import ProjectLaunchChecklist from "./project-launch-checklist";
 
 export const dynamic = "force-dynamic";
 
@@ -63,10 +65,7 @@ export default async function ProjectDetailPage({
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <GenerateBuildPackButton
-              projectId={project.id}
-              prompt={project.prompt}
-            />
+            <GenerateBuildPackButton projectId={project.id} prompt={project.prompt} />
 
             <GenerateProjectFilesButton
               projectId={project.id}
@@ -92,12 +91,14 @@ export default async function ProjectDetailPage({
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-            <p className="text-sm font-bold uppercase text-zinc-500">Mode</p>
-            <p className="mt-2 text-3xl font-black">Option A</p>
+            <p className="text-sm font-bold uppercase text-zinc-500">Export</p>
+            <p className="mt-2 text-3xl font-black">ZIP</p>
           </div>
         </section>
 
         <div className="space-y-8">
+          <ProjectExportPackage project={project} />
+          <ProjectLaunchChecklist generatedFiles={generatedFiles} />
           <GeneratedFilesViewer generatedFiles={generatedFiles} />
           <BuildPackViewer buildPack={buildPack} />
         </div>
