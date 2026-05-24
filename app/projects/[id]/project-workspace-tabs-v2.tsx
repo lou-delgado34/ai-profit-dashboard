@@ -68,10 +68,7 @@ export default function ProjectWorkspaceTabsV2({
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <GenerateBuildPackButton
-              projectId={project.id}
-              prompt={project.prompt}
-            />
+            <GenerateBuildPackButton projectId={project.id} prompt={project.prompt} />
 
             <GenerateProjectFilesButton
               projectId={project.id}
@@ -85,21 +82,13 @@ export default function ProjectWorkspaceTabsV2({
       )}
 
       {tab === "build pack" && <BuildPackViewer buildPack={buildPack} />}
-
-      {tab === "files" && (
-        <GeneratedFilesViewer generatedFiles={generatedFiles} />
-      )}
-
+      {tab === "files" && <GeneratedFilesViewer generatedFiles={generatedFiles} />}
       {tab === "export" && <ProjectExportPackage project={project} />}
-
-      {tab === "launch" && (
-        <ProjectLaunchChecklist generatedFiles={generatedFiles} />
-      )}
-
+      {tab === "launch" && <ProjectLaunchChecklist generatedFiles={generatedFiles} />}
       {tab === "readiness" && <ProductionReadinessPanel project={project} />}
 
       {tab === "real build" && (
-        <RealBuildStatusPanel buildJob={buildJob || null} />
+        <RealBuildStatusPanel project={project} buildJob={buildJob || null} />
       )}
     </div>
   );
