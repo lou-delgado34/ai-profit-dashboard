@@ -10,6 +10,7 @@ import ProjectLaunchChecklist from "./project-launch-checklist";
 import ProductionReadinessPanel from "./production-readiness-panel";
 import StartRealBuildButton from "./start-real-build-button";
 import RealBuildStatusPanel from "./real-build-status-panel";
+import AdminBuildControls from "./admin-build-controls";
 
 export default function ProjectWorkspaceTabsV2({
   project,
@@ -31,6 +32,7 @@ export default function ProjectWorkspaceTabsV2({
     "launch",
     "readiness",
     "real build",
+    "admin",
   ];
 
   return (
@@ -63,6 +65,10 @@ export default function ProjectWorkspaceTabsV2({
             {project.title || "Untitled Project"}
           </h2>
 
+          <p className="mt-2 text-sm font-bold uppercase text-green-400">
+            App Type: {project.app_type || "Custom SaaS App"}
+          </p>
+
           <p className="mt-4 whitespace-pre-wrap text-zinc-400">
             {project.prompt}
           </p>
@@ -90,6 +96,8 @@ export default function ProjectWorkspaceTabsV2({
       {tab === "real build" && (
         <RealBuildStatusPanel project={project} buildJob={buildJob || null} />
       )}
+
+      {tab === "admin" && <AdminBuildControls projectId={project.id} />}
     </div>
   );
 }

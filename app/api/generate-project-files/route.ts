@@ -2,9 +2,7 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,23 +20,24 @@ export async function POST(req: Request) {
         {
           role: "system",
           content: `
-You are a Next.js + Supabase app code generator.
+You are a production Next.js + Supabase code generator.
 
 Return ONLY valid JSON.
 
-Create generated file sections using this structure:
+Generate a stronger file package using this exact JSON:
 
 {
+  "appType": "",
   "pages": [
     {
-      "filename": "app/example/page.tsx",
+      "filename": "app/dashboard/page.tsx",
       "description": "",
       "code": ""
     }
   ],
   "components": [
     {
-      "filename": "components/example-card.tsx",
+      "filename": "components/example.tsx",
       "description": "",
       "code": ""
     }
@@ -52,9 +51,32 @@ Create generated file sections using this structure:
   ],
   "sql": [
     {
-      "filename": "supabase/example.sql",
+      "filename": "supabase/schema.sql",
       "description": "",
       "code": ""
+    }
+  ],
+  "adminFiles": [
+    {
+      "filename": "app/admin/page.tsx",
+      "description": "",
+      "code": ""
+    }
+  ],
+  "agents": [
+    {
+      "name": "",
+      "role": "",
+      "instructions": "",
+      "tools": []
+    }
+  ],
+  "actions": [
+    {
+      "name": "",
+      "type": "",
+      "contentTemplate": "",
+      "approvalRequired": true
     }
   ],
   "env": [
@@ -64,53 +86,54 @@ Create generated file sections using this structure:
     }
   ],
   "installCommands": [],
-  "launchChecklist": []
+  "launchChecklist": [],
+  "securityChecklist": [],
+  "testingChecklist": [],
+  "adminChecklist": []
 }
 
 Rules:
 - Use Next.js App Router.
 - Use TypeScript.
-- Use Tailwind classes.
-- Use Supabase where needed.
-- Keep files practical and copy-paste ready.
-- Do not include markdown.
-- Do not include explanations outside JSON.
+- Use Tailwind.
+- Use Supabase environment variables.
+- Include admin page/file when useful.
+- Include SQL with tables and basic RLS notes.
+- Do not hardcode secrets.
+- Keep code copy-paste ready.
+- Include error handling in API routes.
+- If app involves finance/insurance, avoid income guarantees and include approval/compliance reminders.
 `,
         },
         {
           role: "user",
           content: `
-Original prompt:
+Prompt:
 ${prompt}
 
-Build pack:
+Build Pack:
 ${JSON.stringify(buildPack || {}, null, 2)}
 `,
         },
       ],
     });
 
-    const raw = completion.choices[0]?.message?.content || "{}";
-    const generatedFiles = JSON.parse(raw);
+    const generatedFiles = JSON.parse(
+      completion.choices[0]?.message?.content || "{}"
+    );
 
     const { error } = await supabase
       .from("app_projects")
-      .update({
-        generated_files: generatedFiles,
-      })
+      .update({ generated_files: generatedFiles })
       .eq("id", projectId);
 
     if (error) throw error;
 
-    return NextResponse.json({
-      success: true,
-      generatedFiles,
-    });
+    return NextResponse.json({ success: true, generatedFiles });
   } catch (error) {
     console.log(error);
-
     return NextResponse.json(
-      { error: "Could not generate project files." },
+      { error: "Could not generate advanced project files." },
       { status: 500 }
     );
   }
