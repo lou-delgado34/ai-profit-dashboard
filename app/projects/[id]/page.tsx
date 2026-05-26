@@ -11,121 +11,64 @@ const supabase = createClient(
 export default async function ProjectPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   const { data: project } = await supabase
     .from("app_projects")
     .select("*")
-    .eq("id", params.id)
-    .single();
+    .eq("id", id)
+    .maybeSingle();
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-black text-white p-10">
+      <main className="min-h-screen bg-black p-10 text-white">
         <h1 className="text-5xl font-black">Project Not Found</h1>
+
+        <Link
+          href="/projects"
+          className="mt-8 inline-block rounded-xl bg-blue-600 px-6 py-4 font-bold"
+        >
+          Back to Projects
+        </Link>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#05070d] text-white p-8">
+    <main className="min-h-screen bg-[#05070d] p-8 text-white">
       <div className="mx-auto max-w-7xl">
-
         <nav className="mb-10 flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="rounded-xl bg-blue-600 px-5 py-3 font-bold"
-          >
-            Home
-          </Link>
-
-          <Link
-            href="/projects"
-            className="rounded-xl bg-purple-600 px-5 py-3 font-bold"
-          >
-            Projects
-          </Link>
-
-          <Link
-            href="/agents"
-            className="rounded-xl bg-green-600 px-5 py-3 font-bold"
-          >
-            Agents
-          </Link>
-
-          <Link
-            href="/actions"
-            className="rounded-xl bg-pink-600 px-5 py-3 font-bold"
-          >
-            Actions
-          </Link>
+          <Link href="/" className="rounded-xl bg-blue-600 px-5 py-3 font-bold">Home</Link>
+          <Link href="/projects" className="rounded-xl bg-purple-600 px-5 py-3 font-bold">Projects</Link>
+          <Link href="/agents" className="rounded-xl bg-green-600 px-5 py-3 font-bold">Agents</Link>
+          <Link href="/actions" className="rounded-xl bg-pink-600 px-5 py-3 font-bold">Actions</Link>
         </nav>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10">
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10">
+          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+            Phase 4 Workspace
+          </p>
 
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-                Phase 4 Workspace
-              </p>
+          <h1 className="mt-3 text-5xl font-black">
+            {project.title || "Untitled Project"}
+          </h1>
 
-              <h1 className="mt-3 text-5xl font-black">
-                {project.title}
-              </h1>
-            </div>
-
-            <div className="rounded-full bg-green-600 px-6 py-3 text-sm font-bold">
-              BUILD READY
-            </div>
-          </div>
-
-          <p className="text-zinc-400 text-lg">
+          <p className="mt-5 text-lg text-zinc-400">
             {project.prompt}
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4">
-
-            <button className="rounded-xl bg-blue-600 px-6 py-4 font-bold">
-              Build Pack
-            </button>
-
-            <button className="rounded-xl bg-purple-600 px-6 py-4 font-bold">
-              Files
-            </button>
-
-            <button className="rounded-xl bg-pink-600 px-6 py-4 font-bold">
-              Export
-            </button>
-
-            <button className="rounded-xl bg-orange-600 px-6 py-4 font-bold">
-              Launch
-            </button>
-
-            <button className="rounded-xl bg-cyan-600 px-6 py-4 font-bold">
-              Readiness
-            </button>
-
-            <button className="rounded-xl bg-green-600 px-6 py-4 font-bold">
-              Real Build
-            </button>
-
-            <button className="rounded-xl bg-red-600 px-6 py-4 font-bold">
-              Go Live
-            </button>
-
-          </div>
-
-          <div className="mt-10 rounded-2xl border border-zinc-800 bg-black p-8">
-            <h2 className="text-3xl font-black">
+          <div className="mt-10 rounded-2xl border border-green-800 bg-green-950/30 p-8">
+            <h2 className="text-3xl font-black text-green-300">
               launch_ready
             </h2>
 
             <p className="mt-4 text-zinc-400">
-              Your AI app factory project workspace is now connected correctly.
+              Project workspace is connected correctly.
             </p>
           </div>
-
-        </div>
+        </section>
       </div>
     </main>
   );
