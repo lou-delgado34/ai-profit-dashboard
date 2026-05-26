@@ -1,63 +1,49 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([]);
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    const saved = localStorage.getItem("ai-projects");
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-    if (saved) {
-      setProjects(JSON.parse(saved));
-    }
-  }, []);
+export default async function ProjectsPage() {
+  const { data: projects } = await supabase
+    .from("app_projects")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-black p-8 text-white">
+      <div className="mx-auto max-w-7xl">
+        <h1 className="text-6xl font-black">Projects</h1>
 
-        <h1 className="text-6xl font-black mb-2">
-          Projects
-        </h1>
-
-        <p className="text-zinc-400 mb-10">
+        <p className="mt-3 text-zinc-400">
           Open one project at a time and continue building it.
         </p>
 
-        <div className="space-y-6">
-          {projects.map((project) => (
-            <div
+        <div className="mt-10 space-y-6">
+          {(projects || []).map((project: any) => (
+            <Link
               key={project.id}
-              className="border border-zinc-800 bg-zinc-950 rounded-3xl p-8"
+              href={`/projects/${project.id}`}
+              className="block rounded-3xl border border-zinc-800 bg-zinc-950 p-8 hover:border-blue-500"
             >
-              <h2 className="text-4xl font-black mb-3">
-                {project.title}
+              <h2 className="text-4xl font-black">
+                {project.title || "Untitled Project"}
               </h2>
 
-              <p className="text-zinc-400 mb-6">
+              <p className="mt-3 text-zinc-400">
                 {project.prompt}
               </p>
 
-              <div className="flex gap-4">
-
-                <div className="bg-green-600 text-white px-5 py-3 rounded-xl font-bold">
-                  {project.status || "Draft"}
-                </div>
-
-                <Link
-                  href={`/projects/${project.id}`}
-                  className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-xl font-bold"
-                >
-                  Continue Building
-                </Link>
-
-              </div>
-            </div>
+              <p className="mt-4 text-sm font-bold uppercase text-blue-400">
+                Click anywhere on this card to continue building
+              </p>
+            </Link>
           ))}
         </div>
-
       </div>
     </main>
   );
