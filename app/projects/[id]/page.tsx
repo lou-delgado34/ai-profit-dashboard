@@ -1,239 +1,130 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-type Project = {
-  id: string;
-  title: string;
-  prompt: string;
-  status?: string;
-  app_type?: string;
-  build_pack?: any;
-  generated_files?: any;
-  created_at?: string;
-};
+export const dynamic = "force-dynamic";
 
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const res = await fetch("/api/get-projects");
-        const data = await res.json();
+export default async function ProjectPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const { data: project } = await supabase
+    .from("app_projects")
+    .select("*")
+    .eq("id", params.id)
+    .single();
 
-        if (res.ok) {
-          setProjects(data.projects || []);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-
-      setLoading(false);
-    };
-
-    loadProjects();
-  }, []);
-
-  const filteredProjects = useMemo(() => {
-    let list = [...projects];
-
-    if (search.trim()) {
-      const text = search.toLowerCase();
-
-      list = list.filter(
-        (project) =>
-          project.title?.toLowerCase().includes(text) ||
-          project.prompt?.toLowerCase().includes(text) ||
-          project.app_type?.toLowerCase().includes(text)
-      );
-    }
-
-    if (filter !== "all") {
-      list = list.filter(
-        (project) =>
-          (project.app_type || "Custom SaaS App").toLowerCase() ===
-          filter.toLowerCase()
-      );
-    }
-
-    return list;
-  }, [projects, search, filter]);
-
-  const stats = {
-    total: projects.length,
-    ready: projects.filter((p) => Object.keys(p.generated_files || {}).length > 0)
-      .length,
-    buildPack: projects.filter((p) => Object.keys(p.build_pack || {}).length > 0)
-      .length,
-  };
-
-  const getStatus = (project: Project) => {
-    const hasBuildPack = Object.keys(project.build_pack || {}).length > 0;
-    const hasFiles = Object.keys(project.generated_files || {}).length > 0;
-
-    if (hasBuildPack && hasFiles) return "Build Ready";
-    if (hasBuildPack) return "Build Pack Ready";
-    return "Draft";
-  };
-
-  const getStatusColor = (status: string) => {
-    if (status === "Build Ready") return "bg-green-600";
-    if (status === "Build Pack Ready") return "bg-yellow-600";
-    return "bg-zinc-700";
-  };
+  if (!project) {
+    return (
+      <main className="min-h-screen bg-black text-white p-10">
+        <h1 className="text-5xl font-black">Project Not Found</h1>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[#05070d] p-8 text-white">
+    <main className="min-h-screen bg-[#05070d] text-white p-8">
       <div className="mx-auto max-w-7xl">
+
         <nav className="mb-10 flex flex-wrap gap-3">
-          <Link href="/" className="rounded-xl bg-blue-600 px-5 py-3 font-bold">
+          <Link
+            href="/"
+            className="rounded-xl bg-blue-600 px-5 py-3 font-bold"
+          >
             Home
           </Link>
 
-          <Link href="/projects" className="rounded-xl bg-purple-600 px-5 py-3 font-bold">
+          <Link
+            href="/projects"
+            className="rounded-xl bg-purple-600 px-5 py-3 font-bold"
+          >
             Projects
           </Link>
 
-          <Link href="/agents" className="rounded-xl bg-green-600 px-5 py-3 font-bold">
+          <Link
+            href="/agents"
+            className="rounded-xl bg-green-600 px-5 py-3 font-bold"
+          >
             Agents
           </Link>
 
-          <Link href="/actions" className="rounded-xl bg-pink-600 px-5 py-3 font-bold">
+          <Link
+            href="/actions"
+            className="rounded-xl bg-pink-600 px-5 py-3 font-bold"
+          >
             Actions
           </Link>
         </nav>
 
-        <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.35em] text-blue-400">
-              AI Software Factory
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10">
+
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
+                Phase 4 Workspace
+              </p>
+
+              <h1 className="mt-3 text-5xl font-black">
+                {project.title}
+              </h1>
+            </div>
+
+            <div className="rounded-full bg-green-600 px-6 py-3 text-sm font-bold">
+              BUILD READY
+            </div>
+          </div>
+
+          <p className="text-zinc-400 text-lg">
+            {project.prompt}
+          </p>
+
+          <div className="mt-10 flex flex-wrap gap-4">
+
+            <button className="rounded-xl bg-blue-600 px-6 py-4 font-bold">
+              Build Pack
+            </button>
+
+            <button className="rounded-xl bg-purple-600 px-6 py-4 font-bold">
+              Files
+            </button>
+
+            <button className="rounded-xl bg-pink-600 px-6 py-4 font-bold">
+              Export
+            </button>
+
+            <button className="rounded-xl bg-orange-600 px-6 py-4 font-bold">
+              Launch
+            </button>
+
+            <button className="rounded-xl bg-cyan-600 px-6 py-4 font-bold">
+              Readiness
+            </button>
+
+            <button className="rounded-xl bg-green-600 px-6 py-4 font-bold">
+              Real Build
+            </button>
+
+            <button className="rounded-xl bg-red-600 px-6 py-4 font-bold">
+              Go Live
+            </button>
+
+          </div>
+
+          <div className="mt-10 rounded-2xl border border-zinc-800 bg-black p-8">
+            <h2 className="text-3xl font-black">
+              launch_ready
+            </h2>
+
+            <p className="mt-4 text-zinc-400">
+              Your AI app factory project workspace is now connected correctly.
             </p>
-
-            <h1 className="mt-3 text-5xl font-black">
-              Projects Dashboard
-            </h1>
-
-            <p className="mt-4 text-lg text-zinc-400">
-              Search, filter, continue building, and track project progress.
-            </p>
           </div>
 
-          <Link
-            href="/"
-            className="rounded-2xl bg-blue-600 px-7 py-4 font-black hover:bg-blue-700"
-          >
-            + New Project
-          </Link>
-        </div>
-
-        <section className="mb-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-            <p className="text-sm uppercase text-zinc-500">Total Projects</p>
-            <h2 className="mt-2 text-4xl font-black">{stats.total}</h2>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-            <p className="text-sm uppercase text-zinc-500">Build Packs Ready</p>
-            <h2 className="mt-2 text-4xl font-black">{stats.buildPack}</h2>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-            <p className="text-sm uppercase text-zinc-500">Build Ready</p>
-            <h2 className="mt-2 text-4xl font-black">{stats.ready}</h2>
-          </div>
-        </section>
-
-        <section className="mb-8 grid gap-4 md:grid-cols-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects..."
-            className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-white outline-none"
-          />
-
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-white outline-none"
-          >
-            <option value="all">All App Types</option>
-            <option value="CRM">CRM</option>
-            <option value="Training Platform">Training Platform</option>
-            <option value="Content System">Content System</option>
-            <option value="Financial App">Financial App</option>
-            <option value="Booking App">Booking App</option>
-            <option value="AI Agent System">AI Agent System</option>
-            <option value="Custom SaaS App">Custom SaaS App</option>
-          </select>
-        </section>
-
-        {loading && (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
-            Loading projects...
-          </div>
-        )}
-
-        {!loading && filteredProjects.length === 0 && (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
-            No matching projects found.
-          </div>
-        )}
-
-        <div className="space-y-5">
-          {filteredProjects.map((project) => {
-            const status = getStatus(project);
-
-            return (
-              <div
-                key={project.id}
-                className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6"
-              >
-                <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <h2 className="text-3xl font-black">
-                      {project.title || "Untitled Project"}
-                    </h2>
-
-                    <p className="mt-3 text-zinc-400">
-                      {project.prompt}
-                    </p>
-
-                    <p className="mt-3 text-sm font-bold uppercase text-blue-400">
-                      {project.app_type || "Custom SaaS App"}
-                    </p>
-
-                    <p className="mt-2 text-sm text-zinc-600">
-                      {project.created_at
-                        ? new Date(project.created_at).toLocaleString()
-                        : ""}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <span
-                      className={`rounded-full px-5 py-2 text-sm font-bold text-white ${getStatusColor(
-                        status
-                      )}`}
-                    >
-                      {status}
-                    </span>
-
-                    <Link
-                      href={`/projects/${project.id}`}
-                      className="rounded-xl bg-blue-600 px-5 py-3 text-center font-bold hover:bg-blue-700"
-                    >
-                      Continue Building
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </main>
