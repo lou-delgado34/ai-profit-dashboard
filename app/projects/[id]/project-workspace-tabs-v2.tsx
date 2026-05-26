@@ -14,6 +14,7 @@ import AdminBuildControls from "./admin-build-controls";
 import DeployReadinessButton from "./deploy-readiness-button";
 import DeploymentUrlForm from "./deployment-url-form";
 import DeploymentStatusPanel from "./deployment-status-panel";
+import PrepareDeployButton from "./prepare-deploy-button";
 
 export default function ProjectWorkspaceTabsV2({
   project,
@@ -78,7 +79,10 @@ export default function ProjectWorkspaceTabsV2({
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <GenerateBuildPackButton projectId={project.id} prompt={project.prompt} />
+            <GenerateBuildPackButton
+              projectId={project.id}
+              prompt={project.prompt}
+            />
 
             <GenerateProjectFilesButton
               projectId={project.id}
@@ -89,14 +93,24 @@ export default function ProjectWorkspaceTabsV2({
             <StartRealBuildButton projectId={project.id} />
 
             <DeployReadinessButton projectId={project.id} />
+
+            <PrepareDeployButton projectId={project.id} />
           </div>
         </section>
       )}
 
       {tab === "build pack" && <BuildPackViewer buildPack={buildPack} />}
-      {tab === "files" && <GeneratedFilesViewer generatedFiles={generatedFiles} />}
+
+      {tab === "files" && (
+        <GeneratedFilesViewer generatedFiles={generatedFiles} />
+      )}
+
       {tab === "export" && <ProjectExportPackage project={project} />}
-      {tab === "launch" && <ProjectLaunchChecklist generatedFiles={generatedFiles} />}
+
+      {tab === "launch" && (
+        <ProjectLaunchChecklist generatedFiles={generatedFiles} />
+      )}
+
       {tab === "readiness" && <ProductionReadinessPanel project={project} />}
 
       {tab === "real build" && (
