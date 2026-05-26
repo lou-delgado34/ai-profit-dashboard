@@ -15,6 +15,8 @@ import DeployReadinessButton from "./deploy-readiness-button";
 import DeploymentUrlForm from "./deployment-url-form";
 import DeploymentStatusPanel from "./deployment-status-panel";
 import PrepareDeployButton from "./prepare-deploy-button";
+import GoLiveButton from "./go-live-button";
+import LaunchStatusPanel from "./launch-status-panel";
 
 export default function ProjectWorkspaceTabsV2({
   project,
@@ -37,6 +39,7 @@ export default function ProjectWorkspaceTabsV2({
     "readiness",
     "real build",
     "deploy",
+    "go live",
     "admin",
   ];
 
@@ -79,10 +82,7 @@ export default function ProjectWorkspaceTabsV2({
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <GenerateBuildPackButton
-              projectId={project.id}
-              prompt={project.prompt}
-            />
+            <GenerateBuildPackButton projectId={project.id} prompt={project.prompt} />
 
             <GenerateProjectFilesButton
               projectId={project.id}
@@ -91,26 +91,17 @@ export default function ProjectWorkspaceTabsV2({
             />
 
             <StartRealBuildButton projectId={project.id} />
-
             <DeployReadinessButton projectId={project.id} />
-
             <PrepareDeployButton projectId={project.id} />
+            <GoLiveButton projectId={project.id} />
           </div>
         </section>
       )}
 
       {tab === "build pack" && <BuildPackViewer buildPack={buildPack} />}
-
-      {tab === "files" && (
-        <GeneratedFilesViewer generatedFiles={generatedFiles} />
-      )}
-
+      {tab === "files" && <GeneratedFilesViewer generatedFiles={generatedFiles} />}
       {tab === "export" && <ProjectExportPackage project={project} />}
-
-      {tab === "launch" && (
-        <ProjectLaunchChecklist generatedFiles={generatedFiles} />
-      )}
-
+      {tab === "launch" && <ProjectLaunchChecklist generatedFiles={generatedFiles} />}
       {tab === "readiness" && <ProductionReadinessPanel project={project} />}
 
       {tab === "real build" && (
@@ -126,6 +117,8 @@ export default function ProjectWorkspaceTabsV2({
           />
         </div>
       )}
+
+      {tab === "go live" && <LaunchStatusPanel project={project} />}
 
       {tab === "admin" && <AdminBuildControls projectId={project.id} />}
     </div>
