@@ -11,6 +11,9 @@ import ProductionReadinessPanel from "./production-readiness-panel";
 import StartRealBuildButton from "./start-real-build-button";
 import RealBuildStatusPanel from "./real-build-status-panel";
 import AdminBuildControls from "./admin-build-controls";
+import DeployReadinessButton from "./deploy-readiness-button";
+import DeploymentUrlForm from "./deployment-url-form";
+import DeploymentStatusPanel from "./deployment-status-panel";
 
 export default function ProjectWorkspaceTabsV2({
   project,
@@ -32,6 +35,7 @@ export default function ProjectWorkspaceTabsV2({
     "launch",
     "readiness",
     "real build",
+    "deploy",
     "admin",
   ];
 
@@ -83,6 +87,8 @@ export default function ProjectWorkspaceTabsV2({
             />
 
             <StartRealBuildButton projectId={project.id} />
+
+            <DeployReadinessButton projectId={project.id} />
           </div>
         </section>
       )}
@@ -95,6 +101,16 @@ export default function ProjectWorkspaceTabsV2({
 
       {tab === "real build" && (
         <RealBuildStatusPanel project={project} buildJob={buildJob || null} />
+      )}
+
+      {tab === "deploy" && (
+        <div className="space-y-6">
+          <DeploymentStatusPanel project={project} />
+          <DeploymentUrlForm
+            projectId={project.id}
+            currentUrl={project.deployment_url || ""}
+          />
+        </div>
       )}
 
       {tab === "admin" && <AdminBuildControls projectId={project.id} />}
