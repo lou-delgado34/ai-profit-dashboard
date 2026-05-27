@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import AutomationConsole from "./automation-console";
 import ProductionDashboard from "./production-dashboard";
+import AgentOrchestrationPanel from "./agent-orchestration-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -35,11 +36,16 @@ export default async function ProjectPage({
     .eq("project_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: activities } = await supabase
+    .from("ai_agent_activity")
+    .select("*")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
+
   if (!project) {
     return (
       <main className="min-h-screen bg-black p-10 text-white">
         <h1 className="text-5xl font-black">Project Not Found</h1>
-
         <Link href="/projects" className="mt-8 inline-block rounded-xl bg-blue-600 px-6 py-4 font-bold">
           Back to Projects
         </Link>
@@ -59,7 +65,7 @@ export default async function ProjectPage({
 
         <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-10">
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
-            Phase 5 Production Workspace
+            Final AI Production Workspace
           </p>
 
           <h1 className="mt-3 text-5xl font-black">
@@ -72,20 +78,21 @@ export default async function ProjectPage({
 
           <div className="mt-8 rounded-2xl border border-green-800 bg-green-950/30 p-6">
             <h2 className="text-3xl font-black text-green-300">
-              launch_ready
+              production_ready
             </h2>
 
             <p className="mt-3 text-zinc-400">
-              Project workspace, automation, and production monitoring are connected.
+              Project workspace, automation, monitoring, and AI orchestration are connected.
             </p>
           </div>
         </section>
 
         <div className="mt-8">
-          <ProductionDashboard
-            project={project}
-            notifications={notifications || []}
-          />
+          <ProductionDashboard project={project} notifications={notifications || []} />
+        </div>
+
+        <div className="mt-8">
+          <AgentOrchestrationPanel projectId={project.id} activities={activities || []} />
         </div>
 
         <div className="mt-8">
