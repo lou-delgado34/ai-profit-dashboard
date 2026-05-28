@@ -32,7 +32,10 @@ async function saveCommunication({
   await supabase.from("crm_lead_activities").insert({
     lead_id: leadId,
     activity_type: status === "sent" ? "sms_sent" : "sms_failed",
-    note: status === "sent" ? "SMS sent successfully." : `SMS failed: ${errorMessage}`,
+    note:
+      status === "sent"
+        ? "SMS sent successfully."
+        : `SMS failed: ${errorMessage}`,
   });
 }
 
@@ -42,6 +45,19 @@ export async function POST(req: Request) {
 
     if (!leadId) {
       return NextResponse.json({ error: "Missing leadId." }, { status: 400 });
+    }
+
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const normalFrom = process.env.TWILIO_PHONE_NUMBER;
+    const whatsappFrom =
+      process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+
+    if (!sid || !token) {
+      return NextResponse.json(
+        { error: "Twilio SID or token is missing." },
+        { status: 400 }
+      );
     }
 
     const { data: lead } = await supabase
@@ -55,6 +71,20 @@ export async function POST(req: Request) {
     }
 
     const message = lead.sms_draft || lead.follow_up_message || "";
+
+    if (!message) {
+      await saveCommunication({
+        leadId,
+        message,
+        status: "failed",
+        errorMessage: "SMS message is missing. Click SMS + Email Drafts first.",
+      });
+
+      return NextResponse.json(
+        { error: "SMS message is missing. Click SMS + Email Drafts first." },
+        { status: 400 }
+      );
+    }
 
     if (!lead.phone) {
       await saveCommunication({
@@ -70,34 +100,21 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!message) {
-      await saveCommunication({
-        leadId,
-        message,
-        status: "failed",
-        errorMessage: "SMS message is missing.",
-      });
+    const isWhatsApp = lead.phone.startsWith("whatsapp:");
 
+    const from = isWhatsApp ? whatsappFrom : normalFrom;
+    const to = isWhatsApp ? lead.phone : lead.phone;
+
+    if (!from) {
       return NextResponse.json(
-        { error: "SMS message is missing." },
+        { error: "Twilio FROM number is missing." },
         { status: 400 }
       );
     }
 
-    const sid = process.env.TWILIO_ACCOUNT_SID;
-    const token = process.env.TWILIO_AUTH_TOKEN;
-    const from = process.env.TWILIO_PHONE_NUMBER;
-
-    if (!sid || !token || !from) {
-      await saveCommunication({
-        leadId,
-        message,
-        status: "failed",
-        errorMessage: "Twilio environment variables are missing.",
-      });
-
+    if (!isWhatsApp && !to.startsWith("+")) {
       return NextResponse.json(
-        { error: "Twilio environment variables are missing." },
+        { error: "Phone must include country code. Example: +13219782393" },
         { status: 400 }
       );
     }
@@ -107,7 +124,7 @@ export async function POST(req: Request) {
     const result = await client.messages.create({
       body: message,
       from,
-      to: lead.phone,
+      to,
     });
 
     await saveCommunication({
@@ -122,8 +139,6 @@ export async function POST(req: Request) {
       providerId: result.sid,
     });
   } catch (error: any) {
-    console.log(error);
-
     return NextResponse.json(
       { error: error.message || "Could not send SMS." },
       { status: 500 }
