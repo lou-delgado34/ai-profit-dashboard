@@ -26,10 +26,13 @@ export default function CrmLeadActions({
       body: JSON.stringify({ leadId, ...body }),
     });
 
+    const data = await res.json();
+
     setLoading(false);
 
     if (!res.ok) {
-      alert("Action failed.");
+      alert(data.error || "Action failed.");
+      router.refresh();
       return;
     }
 
@@ -87,6 +90,22 @@ export default function CrmLeadActions({
       </button>
 
       <button
+        onClick={() => run("/api/send-lead-sms")}
+        disabled={loading}
+        className="rounded-xl bg-cyan-600 px-5 py-3 font-bold"
+      >
+        Send SMS
+      </button>
+
+      <button
+        onClick={() => run("/api/send-lead-email")}
+        disabled={loading}
+        className="rounded-xl bg-indigo-600 px-5 py-3 font-bold"
+      >
+        Send Email
+      </button>
+
+      <button
         onClick={() =>
           run("/api/mark-lead-communication", {
             channel: "sms",
@@ -94,7 +113,7 @@ export default function CrmLeadActions({
           })
         }
         disabled={loading}
-        className="rounded-xl bg-cyan-600 px-5 py-3 font-bold"
+        className="rounded-xl bg-zinc-700 px-5 py-3 font-bold"
       >
         Mark SMS Sent
       </button>
@@ -107,7 +126,7 @@ export default function CrmLeadActions({
           })
         }
         disabled={loading}
-        className="rounded-xl bg-indigo-600 px-5 py-3 font-bold"
+        className="rounded-xl bg-zinc-700 px-5 py-3 font-bold"
       >
         Mark Email Sent
       </button>
