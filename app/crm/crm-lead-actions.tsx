@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import AppointmentModal from "./appointment-modal";
 
 export default function CrmLeadActions({
   leadId,
@@ -49,20 +50,6 @@ export default function CrmLeadActions({
     await run("/api/update-lead-stage", { stage });
   };
 
-  const bookAppointment = async () => {
-    const appointmentDate = prompt(
-      "Appointment date/time. Example: 2026-05-30 18:00"
-    );
-
-    if (!appointmentDate) return;
-
-    await run("/api/create-crm-appointment", {
-      appointmentDate,
-      appointmentType: "Zoom",
-      notes: "Booked from CRM.",
-    });
-  };
-
   const createManualTask = async () => {
     const title = prompt("Task title. Example: Call lead tonight");
 
@@ -98,6 +85,18 @@ export default function CrmLeadActions({
         Send Email
       </button>
 
+      <button onClick={() => run("/api/generate-next-best-action")} disabled={loading} className="rounded-xl bg-yellow-600 px-5 py-3 font-bold">
+        AI Next Best Action
+      </button>
+
+      <button onClick={() => run("/api/generate-ai-sales-coach")} disabled={loading} className="rounded-xl bg-amber-600 px-5 py-3 font-bold">
+        AI Sales Coach
+      </button>
+
+      <button onClick={() => run("/api/create-ai-task-for-lead")} disabled={loading} className="rounded-xl bg-lime-600 px-5 py-3 font-bold">
+        AI Task
+      </button>
+
       <button
         onClick={() =>
           run("/api/mark-lead-communication", {
@@ -124,13 +123,11 @@ export default function CrmLeadActions({
         Mark Email Sent
       </button>
 
-      <button onClick={updateStage} disabled={loading} className="rounded-xl bg-yellow-600 px-5 py-3 font-bold">
+      <button onClick={updateStage} disabled={loading} className="rounded-xl bg-orange-600 px-5 py-3 font-bold">
         Update Stage
       </button>
 
-      <button onClick={bookAppointment} disabled={loading} className="rounded-xl bg-orange-600 px-5 py-3 font-bold">
-        Book Appointment
-      </button>
+      <AppointmentModal leadId={leadId} />
 
       <button onClick={() => run("/api/start-follow-up-sequence")} disabled={loading} className="rounded-xl bg-red-600 px-5 py-3 font-bold">
         Start Follow-Up Sequence
