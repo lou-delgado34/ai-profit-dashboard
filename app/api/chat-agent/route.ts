@@ -22,34 +22,63 @@ export async function POST(req: Request) {
       );
     }
 
-    const { data: agent } = await supabase
-      .from("agents")
+    const { data: agent, error: agentError } = await supabase
+      .from("custom_agents")
       .select("*")
       .eq("id", agentId)
       .single();
 
-    if (!agent) {
+    if (agentError || !agent) {
       return NextResponse.json({ error: "Agent not found." }, { status: 404 });
     }
 
-    const { data: history } = await supabase
-      .from("agent_messages")
-      .select("role, content")
+    const { data: memories } = await supabase
+      .from("agent_memories")
+      .select("*")
       .eq("agent_id", agentId)
-      .order("created_at", { ascending: true })
-      .limit(20);
+      .order("created_at", { ascending: true });
 
-    await supabase.from("agent_messages").insert({
-      agent_id: agentId,
-      role: "user",
-      content: message,
-    });
+    const { data: knowledge } = await supabase
+      .from("knowledge_base")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(10);
 
-    const safeHistory =
-      history?.map((m) => ({
-        role: m.role === "assistant" ? "assistant" : "user",
-        content: String(m.content || ""),
-      })) || [];
+    const { data: recentChats } = await supabase
+      .from("agent_chats")
+      .select("*")
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    const memoryText =
+      !memories || memories.length === 0
+        ? "No saved memory yet."
+        : memories
+            .map((memory) => `${memory.memory_title}: ${memory.memory_content}`)
+            .join("\n");
+
+    const knowledgeText =
+      !knowledge || knowledge.length === 0
+        ? "No knowledge base available."
+        : knowledge
+            .map(
+              (item) =>
+                `Knowledge Title: ${item.title}\nCategory: ${item.category}\nContent:\n${item.content}`
+            )
+            .join("\n\n---\n\n");
+
+    const chatHistory =
+      !recentChats || recentChats.length === 0
+        ? "No recent chat history."
+        : recentChats
+            .reverse()
+            .map(
+              (chat) =>
+                `User: ${chat.user_message}\n${agent.name}: ${chat.agent_response}`
+            )
+            .join("\n\n");
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -57,20 +86,40 @@ export async function POST(req: Request) {
         {
           role: "system",
           content: `
-You are a Superagent inside Lou's AI Profit Dashboard.
+You are a custom business AI agent.
 
-Agent Name: ${agent.name}
-Agent Role: ${agent.role}
-Agent Instructions: ${agent.instructions}
+Agent Name:
+${agent.name}
+
+Agent Role:
+${agent.role}
+
+Agent Instructions:
+${agent.instructions}
+
+Agent Tools:
+${(agent.tools || []).join(", ") || "No tools listed."}
+
+Saved Agent Memory:
+${memoryText}
+
+Team Knowledge Base:
+${knowledgeText}
+
+Recent Chat History:
+${chatHistory}
 
 Rules:
-- Be helpful, simple, and clear.
-- If helping with financial services, stay educational and compliant.
-- Do not promise approvals, income, investment results, guaranteed savings, or guaranteed outcomes.
-- Help move the user toward the next best action.
+- Answer as this specific agent.
+- Stay in your role.
+- Use the knowledge base when helpful.
+- Use memory when helpful.
+- Keep answers clear and ready to use.
+- Keep financial services content compliant.
+- Do not promise income, approvals, returns, results, or guarantees.
+- If discussing term life insurance, keep it educational and simple.
 `,
         },
-        ...(safeHistory as any),
         {
           role: "user",
           content: message,
@@ -79,23 +128,30 @@ Rules:
     });
 
     const reply =
-      completion.choices[0]?.message?.content || "No response created.";
+      completion.choices[0]?.message?.content ||
+      "I could not generate a response.";
 
-    await supabase.from("agent_messages").insert({
-      agent_id: agentId,
-      role: "assistant",
-      content: reply,
-    });
+    const { data: savedChat, error: saveError } = await supabase
+      .from("agent_chats")
+      .insert({
+        agent_id: agent.id,
+        agent_name: agent.name,
+        user_message: message,
+        agent_response: reply,
+      })
+      .select("*")
+      .single();
+
+    if (saveError) throw saveError;
 
     return NextResponse.json({
       success: true,
       reply,
+      chat: savedChat,
     });
-  } catch (error) {
-    console.log(error);
-
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Agent chat failed." },
+      { error: error.message || "Agent chat failed." },
       { status: 500 }
     );
   }

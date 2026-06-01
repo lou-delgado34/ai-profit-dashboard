@@ -3,6 +3,51 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const roleTemplates = [
+  {
+    name: "Designer",
+    role: "Designer",
+    tools: "Design, Social Media, Image Prompts, Flyers",
+    instructions:
+      "Create clean, premium, high-converting design concepts for social media, flyers, lead magnets, landing pages, and recruiting graphics. Include headline, layout, image idea, and CTA placement.",
+  },
+  {
+    name: "Copywriter",
+    role: "Copywriter",
+    tools: "Copywriting, Ads, Captions, Hooks",
+    instructions:
+      "Write simple, emotional, compliant copy at a 6th-grade reading level. Create hooks, captions, CTAs, ads, and recruiting messages. Focus on term life, family protection, financial education, and recruiting without making guarantees.",
+  },
+  {
+    name: "Email Marketer",
+    role: "Email Marketer",
+    tools: "Email, Follow-Up, Nurture Campaigns",
+    instructions:
+      "Create friendly email sequences, appointment booking emails, follow-ups, reminders, and recruiting nurture campaigns. Keep tone warm, simple, compliant, and action-focused.",
+  },
+  {
+    name: "Funnel Builder",
+    role: "Funnel Builder",
+    tools: "Funnels, Landing Pages, Forms, CTA",
+    instructions:
+      "Build simple funnel plans with headline, offer, page structure, form fields, thank-you page, CTA, follow-up steps, and CRM workflow. Focus on generating appointments and recruiting conversations.",
+  },
+  {
+    name: "Press Release Writer",
+    role: "Press Release Writer",
+    tools: "PR, Announcements, Media",
+    instructions:
+      "Write professional press releases, announcements, media blurbs, event promotions, and public-facing business updates for Team Avengers. Keep wording professional, clear, and compliant.",
+  },
+  {
+    name: "Manager Agent",
+    role: "Manager Agent",
+    tools: "Delegation, Planning, Review, Strategy",
+    instructions:
+      "Act as the manager of the agent team. Break goals into tasks, assign work to the right agents, review outputs, and combine everything into a final business package.",
+  },
+];
+
 export default function SuperAgentClient({
   runs,
   agents,
@@ -19,7 +64,7 @@ export default function SuperAgentClient({
   const router = useRouter();
 
   const [goal, setGoal] = useState(
-    "Build me a recruiting campaign for people interested in extra income using term life insurance education."
+    "Build me a recruiting campaign for licensed life insurance agents who want extra income."
   );
 
   const [loading, setLoading] = useState(false);
@@ -30,6 +75,7 @@ export default function SuperAgentClient({
     role: "",
     instructions: "",
     tools: "CRM, Email, Funnel, Marketing",
+    status: "active",
   });
 
   const [memoryForm, setMemoryForm] = useState({
@@ -37,6 +83,16 @@ export default function SuperAgentClient({
     memoryTitle: "",
     memoryContent: "",
   });
+
+  function applyTemplate(template: any) {
+    setAgentForm({
+      name: agentForm.name || template.name,
+      role: template.role,
+      instructions: template.instructions,
+      tools: template.tools,
+      status: "active",
+    });
+  }
 
   async function runSuperAgent() {
     if (!goal.trim()) {
@@ -48,14 +104,11 @@ export default function SuperAgentClient({
 
     const res = await fetch("/api/run-superagent", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ goal }),
     });
 
     const data = await res.json();
-
     setLoading(false);
 
     if (!res.ok) {
@@ -77,22 +130,16 @@ export default function SuperAgentClient({
 
     const res = await fetch("/api/create-custom-agent", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: agentForm.name,
         role: agentForm.role,
         instructions: agentForm.instructions,
-        tools: agentForm.tools
-          .split(",")
-          .map((tool) => tool.trim())
-          .filter(Boolean),
+        tools: agentForm.tools.split(",").map((tool) => tool.trim()).filter(Boolean),
       }),
     });
 
     const data = await res.json();
-
     setLoading(false);
 
     if (!res.ok) {
@@ -117,23 +164,18 @@ export default function SuperAgentClient({
 
     const res = await fetch("/api/update-custom-agent", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         agentId: editingAgent.id,
         name: agentForm.name,
         role: agentForm.role,
         instructions: agentForm.instructions,
-        tools: agentForm.tools
-          .split(",")
-          .map((tool) => tool.trim())
-          .filter(Boolean),
+        tools: agentForm.tools.split(",").map((tool) => tool.trim()).filter(Boolean),
+        status: agentForm.status,
       }),
     });
 
     const data = await res.json();
-
     setLoading(false);
 
     if (!res.ok) {
@@ -157,21 +199,17 @@ export default function SuperAgentClient({
     }
 
     const ok = confirm(`Delete ${agent.name}?`);
-
     if (!ok) return;
 
     setLoading(true);
 
     const res = await fetch("/api/delete-custom-agent", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ agentId: agent.id }),
     });
 
     const data = await res.json();
-
     setLoading(false);
 
     if (!res.ok) {
@@ -194,14 +232,11 @@ export default function SuperAgentClient({
 
     const res = await fetch("/api/create-agent-memory", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(memoryForm),
     });
 
     const data = await res.json();
-
     setLoading(false);
 
     if (!res.ok) {
@@ -209,33 +244,24 @@ export default function SuperAgentClient({
       return;
     }
 
-    setMemoryForm({
-      agentId: "",
-      memoryTitle: "",
-      memoryContent: "",
-    });
-
+    setMemoryForm({ agentId: "", memoryTitle: "", memoryContent: "" });
     router.refresh();
     alert("Memory saved.");
   }
 
   async function deleteMemory(memoryId: string) {
     const ok = confirm("Delete this memory?");
-
     if (!ok) return;
 
     setLoading(true);
 
     const res = await fetch("/api/delete-agent-memory", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ memoryId }),
     });
 
     const data = await res.json();
-
     setLoading(false);
 
     if (!res.ok) {
@@ -249,28 +275,25 @@ export default function SuperAgentClient({
 
   function startEditing(agent: any) {
     setEditingAgent(agent);
-
     setAgentForm({
       name: agent.name || "",
       role: agent.role || "",
       instructions: agent.instructions || "",
       tools: (agent.tools || []).join(", "),
+      status: agent.status || "active",
     });
 
-    window.scrollTo({
-      top: 350,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 350, behavior: "smooth" });
   }
 
   function resetForm() {
     setEditingAgent(null);
-
     setAgentForm({
       name: "",
       role: "",
       instructions: "",
       tools: "CRM, Email, Funnel, Marketing",
+      status: "active",
     });
   }
 
@@ -280,8 +303,7 @@ export default function SuperAgentClient({
 
   function getAgentOutputs(agentName: string) {
     return outputs.filter(
-      (output) =>
-        output.agent_name?.toLowerCase() === agentName?.toLowerCase()
+      (output) => output.agent_name?.toLowerCase() === agentName?.toLowerCase()
     );
   }
 
@@ -296,10 +318,6 @@ export default function SuperAgentClient({
       <div className="space-y-6">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
           <h2 className="text-3xl font-black">New SuperAgent Run</h2>
-
-          <p className="mt-3 text-zinc-400">
-            Tell your agent team what to build.
-          </p>
 
           <textarea
             value={goal}
@@ -317,6 +335,22 @@ export default function SuperAgentClient({
         </div>
 
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+          <h2 className="text-3xl font-black">Role Templates</h2>
+
+          <div className="mt-4 grid gap-2">
+            {roleTemplates.map((template) => (
+              <button
+                key={template.role}
+                onClick={() => applyTemplate(template)}
+                className="rounded-xl bg-black px-4 py-3 text-left font-bold hover:bg-zinc-900"
+              >
+                {template.role}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
           <h2 className="text-3xl font-black">
             {editingAgent ? "Edit Custom Agent" : "Create Custom Agent"}
           </h2>
@@ -329,19 +363,15 @@ export default function SuperAgentClient({
 
           <input
             value={agentForm.name}
-            onChange={(e) =>
-              setAgentForm({ ...agentForm, name: e.target.value })
-            }
-            placeholder="Agent name. Example: Emma"
+            onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
+            placeholder="Agent name"
             className="mt-5 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
           />
 
           <input
             value={agentForm.role}
-            onChange={(e) =>
-              setAgentForm({ ...agentForm, role: e.target.value })
-            }
-            placeholder="Role. Example: Email Marketer"
+            onChange={(e) => setAgentForm({ ...agentForm, role: e.target.value })}
+            placeholder="Role"
             className="mt-3 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
           />
 
@@ -350,18 +380,25 @@ export default function SuperAgentClient({
             onChange={(e) =>
               setAgentForm({ ...agentForm, instructions: e.target.value })
             }
-            placeholder="Instructions. Example: Write friendly follow-up emails that book appointments."
+            placeholder="Instructions"
             className="mt-3 min-h-32 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
           />
 
           <input
             value={agentForm.tools}
-            onChange={(e) =>
-              setAgentForm({ ...agentForm, tools: e.target.value })
-            }
+            onChange={(e) => setAgentForm({ ...agentForm, tools: e.target.value })}
             placeholder="Tools separated by commas"
             className="mt-3 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
           />
+
+          <select
+            value={agentForm.status}
+            onChange={(e) => setAgentForm({ ...agentForm, status: e.target.value })}
+            className="mt-3 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <button
@@ -369,17 +406,13 @@ export default function SuperAgentClient({
               disabled={loading}
               className="rounded-2xl bg-green-600 px-5 py-4 font-bold disabled:opacity-50"
             >
-              {loading
-                ? "Saving..."
-                : editingAgent
-                ? "Update Agent"
-                : "Save Custom Agent"}
+              {editingAgent ? "Update Agent" : "Save Custom Agent"}
             </button>
 
             <button
               onClick={resetForm}
               disabled={loading}
-              className="rounded-2xl bg-zinc-800 px-5 py-4 font-bold disabled:opacity-50"
+              className="rounded-2xl bg-zinc-800 px-5 py-4 font-bold"
             >
               Clear
             </button>
@@ -409,7 +442,7 @@ export default function SuperAgentClient({
             onChange={(e) =>
               setMemoryForm({ ...memoryForm, memoryTitle: e.target.value })
             }
-            placeholder="Memory title. Example: Brand Voice"
+            placeholder="Memory title"
             className="mt-3 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
           />
 
@@ -418,7 +451,7 @@ export default function SuperAgentClient({
             onChange={(e) =>
               setMemoryForm({ ...memoryForm, memoryContent: e.target.value })
             }
-            placeholder="Memory content. Example: Always write for Team Avengers, term life, recruiting, English and Spanish."
+            placeholder="Memory content"
             className="mt-3 min-h-32 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
           />
 
@@ -427,7 +460,7 @@ export default function SuperAgentClient({
             disabled={loading}
             className="mt-4 w-full rounded-2xl bg-orange-600 px-5 py-4 font-bold disabled:opacity-50"
           >
-            {loading ? "Saving Memory..." : "Save Memory"}
+            Save Memory
           </button>
         </div>
       </div>
@@ -435,9 +468,6 @@ export default function SuperAgentClient({
       <div className="space-y-6">
         <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
           <h2 className="text-3xl font-black">Agent Admin</h2>
-          <p className="mt-2 text-zinc-400">
-            Manage names, roles, instructions, memory, tasks, and outputs.
-          </p>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             {agents.length === 0 ? (
@@ -455,7 +485,11 @@ export default function SuperAgentClient({
                 return (
                   <div
                     key={agent.id}
-                    className="rounded-3xl border border-zinc-800 bg-black p-5"
+                    className={`rounded-3xl border p-5 ${
+                      agent.status === "inactive"
+                        ? "border-zinc-900 bg-zinc-950 opacity-60"
+                        : "border-zinc-800 bg-black"
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -465,12 +499,22 @@ export default function SuperAgentClient({
                         </p>
                       </div>
 
-                      {isManager && (
-                        <span className="rounded-full bg-orange-950 px-3 py-1 text-xs font-bold text-orange-300">
-                          Manager Locked
-                        </span>
-                      )}
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          agent.status === "inactive"
+                            ? "bg-zinc-800 text-zinc-400"
+                            : "bg-green-950 text-green-300"
+                        }`}
+                      >
+                        {agent.status || "active"}
+                      </span>
                     </div>
+
+                    {isManager && (
+                      <p className="mt-3 rounded-xl bg-orange-950 p-3 text-sm font-bold text-orange-300">
+                        Manager Protected
+                      </p>
+                    )}
 
                     <p className="mt-4 line-clamp-5 text-sm leading-6 text-zinc-400">
                       {agent.instructions}
@@ -491,42 +535,6 @@ export default function SuperAgentClient({
                       <MiniCount label="Memory" value={agentMemories.length} />
                       <MiniCount label="Tasks" value={agentTasks.length} />
                       <MiniCount label="Outputs" value={agentOutputs.length} />
-                    </div>
-
-                    <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                      <p className="text-sm font-bold text-orange-300">
-                        Memory
-                      </p>
-
-                      {agentMemories.length === 0 ? (
-                        <p className="mt-2 text-sm text-zinc-500">
-                          No saved memory.
-                        </p>
-                      ) : (
-                        <div className="mt-3 space-y-3">
-                          {agentMemories.map((memory) => (
-                            <div
-                              key={memory.id}
-                              className="rounded-xl border border-zinc-800 bg-black p-3"
-                            >
-                              <p className="font-bold text-orange-200">
-                                {memory.memory_title}
-                              </p>
-
-                              <p className="mt-2 text-sm leading-6 text-zinc-400">
-                                {memory.memory_content}
-                              </p>
-
-                              <button
-                                onClick={() => deleteMemory(memory.id)}
-                                className="mt-3 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold"
-                              >
-                                Delete Memory
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
 
                     <div className="mt-5 grid gap-2 md:grid-cols-2">
@@ -565,16 +573,11 @@ export default function SuperAgentClient({
               </div>
             ) : (
               runs.map((run) => (
-                <div
-                  key={run.id}
-                  className="rounded-3xl border border-zinc-800 bg-black p-6"
-                >
+                <div key={run.id} className="rounded-3xl border border-zinc-800 bg-black p-6">
                   <p className="text-sm font-bold uppercase text-purple-400">
                     {new Date(run.created_at).toLocaleString()}
                   </p>
-
                   <h3 className="mt-2 text-2xl font-black">{run.user_goal}</h3>
-
                   <pre className="mt-5 max-h-[500px] overflow-auto whitespace-pre-wrap rounded-2xl bg-zinc-950 p-5 text-sm leading-7 text-zinc-300">
                     {run.final_output}
                   </pre>

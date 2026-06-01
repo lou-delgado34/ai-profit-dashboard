@@ -8,39 +8,32 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { fullName, email, role } = await req.json();
+    const { title, category, content } = await req.json();
 
-    if (!fullName || !email) {
+    if (!title || !content) {
       return NextResponse.json(
-        { error: "Missing name or email." },
+        { error: "Missing title or content." },
         { status: 400 }
       );
     }
 
     const { data, error } = await supabase
-      .from("team_members")
+      .from("knowledge_base")
       .insert({
-        name: fullName,
-        email,
-        role: role || "agent",
-        license_level: "life_and_securities",
+        title,
+        category: category || "general",
+        content,
         status: "active",
-        points: 0,
-        appointments_booked: 0,
-        leads_added: 0,
       })
       .select("*")
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json({
-      success: true,
-      member: data,
-    });
+    return NextResponse.json({ success: true, item: data });
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || "Could not create team member." },
+      { error: error.message || "Could not save knowledge." },
       { status: 500 }
     );
   }

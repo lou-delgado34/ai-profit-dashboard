@@ -2,237 +2,23 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function safeText(value: any) {
-  return typeof value === "string" ? value : "";
-}
-
-async function askOpenAI(systemPrompt: string, userPrompt: string) {
-  const completion = await openai.chat.completions.create({
+async function ask(system: string, user: string) {
+  const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-      {
-        role: "user",
-        content: userPrompt,
-      },
+      { role: "system", content: system },
+      { role: "user", content: user },
     ],
   });
 
-  return completion.choices[0]?.message?.content || "";
-}
-
-async function createManagerPlan(goal: string, agents: any[]) {
-  const agentList = agents
-    .map(
-      (agent) => `
-Agent Name: ${agent.name}
-Role: ${agent.role}
-Instructions: ${agent.instructions}
-`
-    )
-    .join("\n");
-
-  const systemPrompt = `
-You are Lou, the Manager Agent for Team Avengers.
-
-Your job:
-Create a clear project plan and assign one specific task to each available agent.
-
-Rules:
-- Use ONLY the agents provided.
-- Assign each agent one task that fits their role.
-- Keep all financial services language compliant.
-- Do not promise income, approvals, financial results, or guaranteed outcomes.
-- If term life insurance is mentioned, keep it educational.
-- Return JSON only.
-- Do not add markdown.
-- Do not wrap JSON in code fences.
-
-Return this exact JSON structure:
-
-{
-  "projectPlan": "Short plain English project plan.",
-  "tasks": [
-    {
-      "agentName": "Agent name here",
-      "agentRole": "Agent role here",
-      "taskTitle": "Short task title",
-      "taskDescription": "Clear task instructions"
-    }
-  ]
-}
-`;
-
-  const userPrompt = `
-User Goal:
-${goal}
-
-Available Agents:
-${agentList}
-
-Create the delegation plan now.
-`;
-
-  const text = await askOpenAI(systemPrompt, userPrompt);
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {
-      projectPlan:
-        "Manager plan could not be parsed as JSON, so each agent will receive a role-based task.",
-      tasks: agents.map((agent) => ({
-        agentName: agent.name,
-        agentRole: agent.role,
-        taskTitle: `${agent.role} contribution`,
-        taskDescription: `Use your role as ${agent.role} to help complete this goal: ${goal}`,
-      })),
-    };
-  }
-}
-
-async function runAssignedAgent({
-  agent,
-  task,
-  memories,
-  goal,
-  projectPlan,
-}: {
-  agent: any;
-  task: any;
-  memories: any[];
-  goal: string;
-  projectPlan: string;
-}) {
-  const memoryText =
-    memories.length === 0
-      ? "No saved memory yet."
-      : memories
-          .map(
-            (memory) =>
-              `Memory Title: ${memory.memory_title}\nMemory: ${memory.memory_content}`
-          )
-          .join("\n\n");
-
-  const systemPrompt = `
-You are a custom business AI agent.
-
-Agent Name:
-${agent.name}
-
-Agent Role:
-${agent.role}
-
-Agent Instructions:
-${agent.instructions}
-
-Saved Agent Memory:
-${memoryText}
-
-Manager Project Plan:
-${projectPlan}
-
-Your Assigned Task:
-${task.taskTitle}
-
-Task Instructions:
-${task.taskDescription}
-
-Rules:
-- Do ONLY your assigned task.
-- Do not complete other agents' tasks.
-- Keep the output practical and ready to use.
-- Keep financial services language compliant.
-- Do not promise income, approvals, financial results, or guaranteed outcomes.
-- If discussing term life insurance, keep it educational and simple.
-- If your work should be saved as a business asset, include a section called TOOL OUTPUT.
-`;
-
-  const userPrompt = `
-User Goal:
-${goal}
-
-Complete your assigned task now.
-`;
-
-  return askOpenAI(systemPrompt, userPrompt);
-}
-
-async function assembleFinalPackage({
-  goal,
-  projectPlan,
-  taskResults,
-}: {
-  goal: string;
-  projectPlan: string;
-  taskResults: any[];
-}) {
-  const allOutputs = taskResults
-    .map(
-      (item) => `
-Agent: ${item.agentName}
-Role: ${item.agentRole}
-Task: ${item.taskTitle}
-Output:
-${item.output}
-`
-    )
-    .join("\n\n");
-
-  const systemPrompt = `
-You are Lou, the Manager Agent.
-
-Your job:
-Review all agent outputs and combine them into one clean final business package.
-
-Rules:
-- Keep it organized.
-- Keep it useful.
-- Use simple English.
-- Keep compliance-friendly language.
-- Do not promise income, approvals, returns, or guaranteed outcomes.
-- Use headings.
-`;
-
-  const userPrompt = `
-User Goal:
-${goal}
-
-Project Plan:
-${projectPlan}
-
-Agent Outputs:
-${allOutputs}
-
-Create the final business package now.
-`;
-
-  return askOpenAI(systemPrompt, userPrompt);
-}
-
-function extractToolOutput(agentName: string, output: string) {
-  const hasToolOutput = output.toLowerCase().includes("tool output");
-
-  if (!hasToolOutput) return null;
-
-  return {
-    agentName,
-    toolName: "Tool Output Saver",
-    outputTitle: `${agentName} Delegated Output`,
-    outputContent: output,
-  };
+  return res.choices[0]?.message?.content || "";
 }
 
 export async function POST(req: Request) {
@@ -243,198 +29,205 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing goal." }, { status: 400 });
     }
 
-    const { data: agents, error: agentsError } = await supabase
+    const { data: agents } = await supabase
       .from("custom_agents")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: true });
 
-    if (agentsError) throw agentsError;
-
     if (!agents || agents.length === 0) {
       return NextResponse.json(
-        { error: "No custom agents found. Create at least one custom agent first." },
+        { error: "Create custom agents first." },
         { status: 400 }
       );
     }
 
-    const { data: memories, error: memoriesError } = await supabase
+    const { data: memories } = await supabase
       .from("agent_memories")
-      .select("*")
-      .order("created_at", { ascending: true });
+      .select("*");
 
-    if (memoriesError) throw memoriesError;
+    const agentList = agents
+      .map((a) => `${a.name} — ${a.role}\n${a.instructions}`)
+      .join("\n\n");
 
-    const managerPlan = await createManagerPlan(goal, agents);
-    const projectPlan = safeText(managerPlan.projectPlan);
-    const tasks = Array.isArray(managerPlan.tasks) ? managerPlan.tasks : [];
+    const managerPlan = await ask(
+      `
+You are Lou, the SuperAgent Manager.
 
-    const { data: run, error: runError } = await supabase
-      .from("superagent_runs")
-      .insert({
-        user_goal: goal,
-        status: "running",
-        manager_output: projectPlan,
-        final_output: "SuperAgent delegation started.",
-      })
-      .select("*")
-      .single();
+Create a clear delegation plan for the user's goal.
 
-    if (runError) throw runError;
+Rules:
+- Use the agents provided.
+- Assign each agent a specific job.
+- Keep it compliant.
+- No income promises.
+- No guaranteed results.
+- Return a simple readable plan.
+`,
+      `
+Goal:
+${goal}
 
-    const taskResults = [];
+Agents:
+${agentList}
+`
+    );
+
+    const taskResults: any[] = [];
 
     for (const agent of agents) {
-      const matchingTask =
-        tasks.find(
-          (task: any) =>
-            safeText(task.agentName).toLowerCase() ===
-            safeText(agent.name).toLowerCase()
-        ) ||
-        tasks.find(
-          (task: any) =>
-            safeText(task.agentRole).toLowerCase() ===
-            safeText(agent.role).toLowerCase()
-        ) || {
-          agentName: agent.name,
-          agentRole: agent.role,
-          taskTitle: `${agent.role} contribution`,
-          taskDescription: `Use your role as ${agent.role} to help complete this goal: ${goal}`,
-        };
+      const agentMemories = (memories || [])
+        .filter((m) => m.agent_id === agent.id)
+        .map((m) => `${m.memory_title}: ${m.memory_content}`)
+        .join("\n");
 
-      const agentMemories = (memories || []).filter(
-        (memory) => memory.agent_id === agent.id
+      const taskOutput = await ask(
+        `
+You are ${agent.name}.
+
+Role:
+${agent.role}
+
+Instructions:
+${agent.instructions}
+
+Memory:
+${agentMemories || "No memory yet."}
+
+Manager Plan:
+${managerPlan}
+
+Rules:
+- Do only your specialist part.
+- Do not do every agent's job.
+- Make your output usable.
+- Keep it compliant.
+- No income guarantees or promised results.
+`,
+        `
+User Goal:
+${goal}
+
+Complete your assigned part.
+`
       );
 
-      const output = await runAssignedAgent({
-        agent,
-        task: matchingTask,
-        memories: agentMemories,
-        goal,
-        projectPlan,
-      });
-
-      const { data: taskRow } = await supabase
-        .from("agent_tasks")
-        .insert({
-          run_id: run.id,
-          agent_id: agent.id,
-          agent_name: agent.name,
-          agent_role: agent.role,
-          task_title: matchingTask.taskTitle,
-          task_description: matchingTask.taskDescription,
-          output,
-          status: "completed",
-        })
-        .select("*")
-        .single();
-
       taskResults.push({
+        agentId: agent.id,
         agentName: agent.name,
         agentRole: agent.role,
-        taskTitle: matchingTask.taskTitle,
-        taskDescription: matchingTask.taskDescription,
-        output,
-        taskId: taskRow?.id,
+        output: taskOutput,
       });
     }
 
-    const finalPackage = await assembleFinalPackage({
-      goal,
-      projectPlan,
-      taskResults,
-    });
+    const taskSummary = taskResults
+      .map(
+        (t) => `
+${t.agentName} (${t.agentRole})
+${t.output}
+`
+      )
+      .join("\n\n---\n\n");
+
+    const finalPackage = await ask(
+      `
+You are Lou, the SuperAgent Manager.
+
+Combine all agent work into one polished business package.
+
+Use sections:
+1. Executive Summary
+2. Campaign Strategy
+3. Copy Assets
+4. Email Assets
+5. Funnel Assets
+6. Design Direction
+7. CRM Follow-Up Plan
+8. Next Steps
+
+Keep it clean, useful, and compliant.
+`,
+      `
+Goal:
+${goal}
+
+Manager Plan:
+${managerPlan}
+
+Agent Work:
+${taskSummary}
+`
+    );
 
     const finalOutput = `
-# SUPERAGENT DELEGATED RESULT
+# SUPERAGENT MANAGER RESULT
 
-## MANAGER PROJECT PLAN
+## Manager Plan
 
-${projectPlan}
-
---------------------------------
-
-## ASSIGNED TASKS
-
-${taskResults
-  .map(
-    (item) => `### ${item.agentName} (${item.agentRole})
-
-Task:
-${item.taskTitle}
-
-Instructions:
-${item.taskDescription}
-
-Output:
-${item.output}
-`
-  )
-  .join("\n\n")}
+${managerPlan}
 
 --------------------------------
 
-## FINAL BUSINESS PACKAGE
+## Agent Contributions
+
+${taskSummary}
+
+--------------------------------
+
+## Final Business Package
 
 ${finalPackage}
 `;
 
-    await supabase
+    const { data: run, error } = await supabase
       .from("superagent_runs")
-      .update({
+      .insert({
+        user_goal: goal,
         status: "completed",
-        manager_output: projectPlan,
+        manager_output: managerPlan,
+        manager_plan: managerPlan,
+        delegated_tasks: taskResults,
+        final_package: finalPackage,
+        final_output: finalOutput,
         marketing_output: taskResults[0]?.output || "",
         email_output: taskResults[1]?.output || "",
         funnel_output: taskResults[2]?.output || "",
         crm_output: taskResults[3]?.output || "",
-        final_output: finalOutput,
       })
-      .eq("id", run.id);
+      .select("*")
+      .single();
 
-    const toolOutputs = taskResults
-      .map((item) => extractToolOutput(item.agentName, item.output))
-      .filter(Boolean);
+    if (error) throw error;
 
-    for (const output of toolOutputs as any[]) {
-      await supabase.from("agent_tool_outputs").insert({
+    await supabase.from("campaigns").insert({
+      title: goal.slice(0, 90),
+      campaign_type: goal.toLowerCase().includes("recruit")
+        ? "recruiting"
+        : "marketing",
+      content: finalOutput,
+      status: "draft",
+    });
+
+    for (const task of taskResults) {
+      await supabase.from("agent_tasks").insert({
         run_id: run.id,
-        agent_name: output.agentName,
-        tool_name: output.toolName,
-        output_title: output.outputTitle,
-        output_content: output.outputContent,
-      });
-    }
-
-    const shouldCreateCampaign =
-      goal.toLowerCase().includes("campaign") ||
-      goal.toLowerCase().includes("recruiting") ||
-      goal.toLowerCase().includes("content");
-
-    if (shouldCreateCampaign) {
-      await supabase.from("campaigns").insert({
-        title: goal.slice(0, 90),
-        campaign_type: goal.toLowerCase().includes("recruit")
-          ? "recruiting"
-          : "marketing",
-        content: finalOutput,
-        status: "draft",
+        agent_id: task.agentId,
+        agent_name: task.agentName,
+        agent_role: task.agentRole,
+        task_title: `${task.agentRole} assignment`,
+        task_description: goal,
+        output: task.output,
+        status: "completed",
       });
     }
 
     return NextResponse.json({
       success: true,
-      run: {
-        ...run,
-        status: "completed",
-        final_output: finalOutput,
-      },
-      projectPlan,
-      tasks: taskResults,
+      run,
     });
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || "SuperAgent delegation failed." },
+      { error: error.message || "Manager run failed." },
       { status: 500 }
     );
   }

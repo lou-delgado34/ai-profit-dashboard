@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { agentId, name, role, instructions, tools } = await req.json();
+    const { agentId, name, role, instructions, tools, status } = await req.json();
 
     if (!agentId || !name || !role || !instructions) {
       return NextResponse.json(
@@ -17,6 +17,9 @@ export async function POST(req: Request) {
       );
     }
 
+    const isManager =
+      name.toLowerCase() === "lou" || role.toLowerCase().includes("manager");
+
     const { data, error } = await supabase
       .from("custom_agents")
       .update({
@@ -24,6 +27,7 @@ export async function POST(req: Request) {
         role,
         instructions,
         tools: tools || [],
+        status: isManager ? "active" : status || "active",
       })
       .eq("id", agentId)
       .select("*")
