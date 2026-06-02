@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useLanguage } from "../components/LanguageProvider";
 
 export default function AgentChatClient({
   agents,
@@ -11,11 +12,16 @@ export default function AgentChatClient({
   chats: any[];
 }) {
   const router = useRouter();
+  const { lang, t } = useLanguage();
 
   const [agentId, setAgentId] = useState(agents[0]?.id || "");
   const [message, setMessage] = useState(
-    "Create 3 recruiting post ideas for licensed life insurance agents."
+    t(
+      "Create 3 recruiting post ideas for licensed life insurance agents.",
+      "Crea 3 ideas de publicaciones para reclutar agentes licenciados de seguros de vida."
+    )
   );
+
   const [loading, setLoading] = useState(false);
   const [lastReply, setLastReply] = useState("");
 
@@ -28,12 +34,12 @@ export default function AgentChatClient({
 
   async function sendMessage() {
     if (!agentId) {
-      alert("Choose an agent.");
+      alert(t("Choose an agent.", "Escoge un agente."));
       return;
     }
 
     if (!message.trim()) {
-      alert("Type a message.");
+      alert(t("Type a message.", "Escribe un mensaje."));
       return;
     }
 
@@ -47,6 +53,7 @@ export default function AgentChatClient({
       body: JSON.stringify({
         agentId,
         message,
+        language: lang,
       }),
     });
 
@@ -55,7 +62,7 @@ export default function AgentChatClient({
     setLoading(false);
 
     if (!res.ok) {
-      alert(data.error || "Chat failed.");
+      alert(data.error || t("Chat failed.", "El chat falló."));
       return;
     }
 
@@ -66,18 +73,20 @@ export default function AgentChatClient({
 
   function copyReply() {
     if (!lastReply) {
-      alert("No reply to copy yet.");
+      alert(t("No reply to copy yet.", "Todavía no hay respuesta para copiar."));
       return;
     }
 
     navigator.clipboard.writeText(lastReply);
-    alert("Reply copied.");
+    alert(t("Reply copied.", "Respuesta copiada."));
   }
 
   return (
     <section className="mt-8 grid gap-6 lg:grid-cols-[360px_1fr]">
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-        <h2 className="text-3xl font-black">Choose Agent</h2>
+        <h2 className="text-3xl font-black">
+          {t("Choose Agent", "Escoger Agente")}
+        </h2>
 
         <select
           value={agentId}
@@ -85,7 +94,9 @@ export default function AgentChatClient({
           className="mt-5 w-full rounded-2xl border border-zinc-800 bg-black p-4 text-white"
         >
           {agents.length === 0 ? (
-            <option value="">No active agents</option>
+            <option value="">
+              {t("No active agents", "No hay agentes activos")}
+            </option>
           ) : (
             agents.map((agent) => (
               <option key={agent.id} value={agent.id}>
@@ -98,6 +109,7 @@ export default function AgentChatClient({
         {selectedAgent && (
           <div className="mt-5 rounded-2xl border border-zinc-800 bg-black p-4">
             <p className="text-xl font-black">{selectedAgent.name}</p>
+
             <p className="mt-1 text-sm font-bold text-green-300">
               {selectedAgent.role}
             </p>
@@ -122,7 +134,9 @@ export default function AgentChatClient({
 
       <div className="space-y-6">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <h2 className="text-3xl font-black">Message Agent</h2>
+          <h2 className="text-3xl font-black">
+            {t("Message Agent", "Enviar Mensaje al Agente")}
+          </h2>
 
           <textarea
             value={message}
@@ -136,14 +150,16 @@ export default function AgentChatClient({
               disabled={loading}
               className="rounded-2xl bg-green-600 px-6 py-4 font-bold disabled:opacity-50"
             >
-              {loading ? "Agent Thinking..." : "Send Message"}
+              {loading
+                ? t("Agent Thinking...", "Agente pensando...")
+                : t("Send Message", "Enviar Mensaje")}
             </button>
 
             <button
               onClick={copyReply}
               className="rounded-2xl bg-blue-600 px-6 py-4 font-bold"
             >
-              Copy Last Reply
+              {t("Copy Last Reply", "Copiar Última Respuesta")}
             </button>
           </div>
         </div>
@@ -151,7 +167,7 @@ export default function AgentChatClient({
         {lastReply && (
           <div className="rounded-3xl border border-green-800 bg-green-950/20 p-6">
             <p className="text-sm font-bold uppercase tracking-widest text-green-300">
-              Latest Reply
+              {t("Latest Reply", "Última Respuesta")}
             </p>
 
             <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-black p-5 text-sm leading-7 text-zinc-300">
@@ -161,11 +177,18 @@ export default function AgentChatClient({
         )}
 
         <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <h2 className="text-3xl font-black">Recent Chat History</h2>
+          <h2 className="text-3xl font-black">
+            {t("Recent Chat History", "Historial Reciente")}
+          </h2>
 
           <div className="mt-5 space-y-4">
             {selectedChats.length === 0 ? (
-              <p className="text-zinc-500">No chat history for this agent yet.</p>
+              <p className="text-zinc-500">
+                {t(
+                  "No chat history for this agent yet.",
+                  "Todavía no hay historial para este agente."
+                )}
+              </p>
             ) : (
               selectedChats.map((chat) => (
                 <div
@@ -176,12 +199,18 @@ export default function AgentChatClient({
                     {chat.agent_name} • {new Date(chat.created_at).toLocaleString()}
                   </p>
 
-                  <p className="mt-4 font-bold text-white">You:</p>
+                  <p className="mt-4 font-bold text-white">
+                    {t("You:", "Tú:")}
+                  </p>
+
                   <p className="mt-2 text-sm leading-6 text-zinc-400">
                     {chat.user_message}
                   </p>
 
-                  <p className="mt-4 font-bold text-white">{chat.agent_name}:</p>
+                  <p className="mt-4 font-bold text-white">
+                    {chat.agent_name}:
+                  </p>
+
                   <pre className="mt-2 whitespace-pre-wrap text-sm leading-7 text-zinc-300">
                     {chat.agent_response}
                   </pre>

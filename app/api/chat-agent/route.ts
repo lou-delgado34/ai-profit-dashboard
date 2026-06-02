@@ -13,7 +13,12 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { agentId, message } = await req.json();
+    const { agentId, message, language } = await req.json();
+
+    const outputLanguage =
+      language === "es"
+        ? "Spanish. Reply only in Spanish."
+        : "English. Reply only in English.";
 
     if (!agentId || !message) {
       return NextResponse.json(
@@ -88,6 +93,9 @@ export async function POST(req: Request) {
           content: `
 You are a custom business AI agent.
 
+Output Language:
+${outputLanguage}
+
 Agent Name:
 ${agent.name}
 
@@ -118,6 +126,7 @@ Rules:
 - Keep financial services content compliant.
 - Do not promise income, approvals, returns, results, or guarantees.
 - If discussing term life insurance, keep it educational and simple.
+- Follow the Output Language exactly.
 `,
         },
         {

@@ -23,7 +23,11 @@ async function ask(system: string, user: string) {
 
 export async function POST(req: Request) {
   try {
-    const { goal } = await req.json();
+    const { goal, language } = await req.json();
+const outputLanguage =
+  language === "es"
+    ? "Spanish. Write all output in Spanish."
+    : "English. Write all output in English.";
 
     if (!goal) {
       return NextResponse.json({ error: "Missing goal." }, { status: 400 });

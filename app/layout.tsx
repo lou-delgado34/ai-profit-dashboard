@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import GlobalNav from "./components/GlobalNav";
+import { LanguageProvider } from "./components/LanguageProvider";
 
 export const metadata: Metadata = {
   title: "Team Avengers AI Platform",
@@ -15,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <GlobalNav />
-        {children}
+        <LanguageProvider>
+          <GlobalNav />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );
